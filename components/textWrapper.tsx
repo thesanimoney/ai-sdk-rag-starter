@@ -1,4 +1,5 @@
 import React from 'react';
+import SqlWrapper from "@/components/sql-wrapper";
 
 // Function to convert markdown-like text to HTML
 const convertToHTML = (text: string) => {
@@ -22,6 +23,10 @@ const convertToHTML = (text: string) => {
 
 export const DynamicTextRenderer = ({ text }: {text: string }) => {
   const htmlContent = convertToHTML(text);
+  if (text.startsWith('```sql')) {
+    let sqlText = text.replace('```sql', '')
+    return <SqlWrapper code={sqlText}/>
+  }
 
   return (
     <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
