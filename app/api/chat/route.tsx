@@ -3,6 +3,8 @@ import { openai } from '@ai-sdk/openai';
 import { convertToCoreMessages, streamText, tool } from 'ai';
 import { z } from 'zod';
 import { findRelevantContent } from '@/lib/ai/embedding';
+import generateSQL from "@/lib/ai/sql";
+import {streamUI} from "ai/rsc";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -10,8 +12,9 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const result = await streamText({
+  const result = await streamUI({
     model: openai('gpt-4o'),
+    text: ({ content }) => <div>{content}</div>,
     messages: convertToCoreMessages(messages),
     system: `You are a helpful assistant. Check your knowledge base before answering any questions.
     Only respond to questions using information from tool calls.
@@ -34,8 +37,13 @@ export async function POST(req: Request) {
         }),
         execute: async ({ question }) => findRelevantContent(question),
       }),
-
-
+      generateSQL: tool({
+        description: 'generate SQL script based on user requirements',
+        parameters: z.object({
+          content: z.string().describe('the requirements that should be analyzed before SQL script creation'),
+        }),
+        execute: async ({ content }) => generateSQL({content}),
+      }),
     },
   });
 
